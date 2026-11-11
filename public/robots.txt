@@ -1,5 +1,5 @@
 # Beau Monde Builders - robots.txt
-# https://bmb.builders
+# https://alptempsite.com
 
 User-agent: Googlebot
 Allow: /
@@ -50,5 +50,3 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-# Sitemap location
-Sitemap: https://bmb.builders/sitemap.xml

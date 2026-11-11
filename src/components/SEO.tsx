@@ -227,7 +227,7 @@ export const SEO = ({
       <meta name="author" content="Beau Monde Builders" />
       <link rel="canonical" href={canonicalUrl} />
       
-      {noIndex && <meta name="robots" content="noindex, nofollow" />}
+      <meta name="robots" content="noindex, nofollow" />
       
       {/* Geo Tags for Local SEO */}
       <meta name="geo.region" content="US-FL" />
