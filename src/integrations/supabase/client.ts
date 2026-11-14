@@ -3,8 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { brokeredPreviewStorage } from './previewAuthStorage';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+// Public browser configuration from the existing Cloud project; permissions remain enforced by RLS.
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://obouzaadghqzfenqclmc.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9ib3V6YWFkZ2hxemZlbnFjbG1jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2Njg1NjUsImV4cCI6MjA5NjI0NDU2NX0.eFLIn3kjcYt2fEHJpIFbIJse5qBNxMZkSfU9bEIvBOw';
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
