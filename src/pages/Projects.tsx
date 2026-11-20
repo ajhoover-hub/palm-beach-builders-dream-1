@@ -488,33 +488,17 @@ const InquiryPlate = ({ defaultStyle }: { defaultStyle?: string }) => {
     }
     setSubmitting(true);
     try {
-      const { error: notifyError } = await supabase.functions.invoke("send-transactional-email", {
+      const { error } = await supabase.functions.invoke("submit-inquiry", {
         body: {
-          templateName: "style-book-notification",
-          idempotencyKey: `style-notify-${Date.now()}-${parsed.data.email}`,
-          templateData: {
-            fullName: parsed.data.name,
-            email: parsed.data.email,
-            phone: parsed.data.phone,
-            style: parsed.data.style,
-            message: parsed.data.note,
-          },
+          kind: "style-book",
+          name: parsed.data.name,
+          email: parsed.data.email,
+          phone: parsed.data.phone,
+          style: parsed.data.style,
+          note: parsed.data.note,
         },
       });
-      if (notifyError) throw notifyError;
-
-      const { error: confirmError } = await supabase.functions.invoke("send-transactional-email", {
-        body: {
-          templateName: "style-book-confirmation",
-          recipientEmail: parsed.data.email,
-          idempotencyKey: `style-confirm-${Date.now()}-${parsed.data.email}`,
-          templateData: {
-            firstName: parsed.data.name?.split(" ")[0] ?? parsed.data.name,
-            style: parsed.data.style,
-          },
-        },
-      });
-      if (confirmError) throw confirmError;
+      if (error) throw error;
       toast({
         title: "Sent to Beau Monde",
         description: "We'll be in touch within 24 hours.",
