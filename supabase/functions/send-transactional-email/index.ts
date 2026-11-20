@@ -2,10 +2,11 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 import { TEMPLATES } from '../_shared/transactional-email-templates/registry.ts'
 import { enqueueTransactionalEmail } from '../_shared/transactional-email.ts'
+import { isServiceRoleRequest } from '../_shared/service-role.ts'
 
-// Auth note: this function uses verify_jwt = true in config.toml, so Supabase's
-// gateway validates the caller's JWT (anon or service_role) before the request
-// reaches this code. No in-function auth check is needed.
+// Server-to-server only: callers choose the recipient and template data, so
+// the public anon key must never be enough. Website forms go through
+// submit-inquiry instead.
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -22,6 +23,16 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: 'Server configuration error' }),
       {
         status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    )
+  }
+
+  if (!isServiceRoleRequest(req)) {
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized' }),
+      {
+        status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     )
