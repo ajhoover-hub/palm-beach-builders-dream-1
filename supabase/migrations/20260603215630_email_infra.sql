@@ -197,17 +197,18 @@ END;
 $$;
 
 -- Restrict queue RPC wrappers to service_role only (SECURITY DEFINER runs as owner,
--- so without this any authenticated user could manipulate the email queues)
-REVOKE EXECUTE ON FUNCTION public.enqueue_email(TEXT, JSONB) FROM PUBLIC;
+-- so without this any authenticated user could manipulate the email queues).
+-- Supabase grants EXECUTE to anon and authenticated directly, not only via PUBLIC.
+REVOKE EXECUTE ON FUNCTION public.enqueue_email(TEXT, JSONB) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.enqueue_email(TEXT, JSONB) TO service_role;
 
-REVOKE EXECUTE ON FUNCTION public.read_email_batch(TEXT, INT, INT) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.read_email_batch(TEXT, INT, INT) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.read_email_batch(TEXT, INT, INT) TO service_role;
 
-REVOKE EXECUTE ON FUNCTION public.delete_email(TEXT, BIGINT) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.delete_email(TEXT, BIGINT) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.delete_email(TEXT, BIGINT) TO service_role;
 
-REVOKE EXECUTE ON FUNCTION public.move_to_dlq(TEXT, TEXT, BIGINT, JSONB) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.move_to_dlq(TEXT, TEXT, BIGINT, JSONB) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.move_to_dlq(TEXT, TEXT, BIGINT, JSONB) TO service_role;
 
 -- Suppressed emails table (tracks unsubscribes, bounces, complaints)
