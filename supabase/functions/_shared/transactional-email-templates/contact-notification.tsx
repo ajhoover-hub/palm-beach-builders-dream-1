@@ -13,6 +13,7 @@ import {
   Text,
 } from 'npm:@react-email/components@0.0.22'
 import type { TemplateEntry } from './registry.ts'
+import { plainEmail, plainPhone } from '../inquiry-contact.ts'
 
 interface Props {
   fullName?: string
@@ -21,7 +22,7 @@ interface Props {
   message?: string
 }
 
-const Email = ({ fullName, email, phone, message }: Props) => (
+const EmailLayout = ({ fullName, email, phone, message }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
     <Preview>New contact form submission{fullName ? ` from ${fullName}` : ''}</Preview>
@@ -61,6 +62,11 @@ const Email = ({ fullName, email, phone, message }: Props) => (
       </Container>
     </Body>
   </Html>
+)
+
+// Only checked values may reach the mailto: and tel: hrefs.
+const Email = ({ email, phone, ...rest }: Props) => (
+  <EmailLayout {...rest} email={plainEmail(email)} phone={plainPhone(phone)} />
 )
 
 export const template = {
