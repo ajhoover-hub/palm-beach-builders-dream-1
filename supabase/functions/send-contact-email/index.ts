@@ -19,6 +19,35 @@ interface ContactEmailRequest {
   source?: string;
 }
 
+// The email and phone are placed in mailto:/tel: links in the team
+// notification, so accept only a single bare address / phone number.
+const EMAIL_PATTERN =
+  /^[A-Za-z0-9._'+-]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/;
+const PHONE_PATTERN = /^\+?[0-9 ().-]+$/;
+
+const isPlainEmail = (value: string): boolean =>
+  value.length <= 254 && EMAIL_PATTERN.test(value);
+
+const isPlainPhone = (value: string): boolean => {
+  if (value.length > 40 || !PHONE_PATTERN.test(value)) return false;
+  const digits = value.replace(/[^0-9]/g, "").length;
+  return digits >= 7 && digits <= 15;
+};
+
+const escapeHtml = (value: unknown): string =>
+  String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const badRequest = (error: string): Response =>
+  new Response(JSON.stringify({ error }), {
+    status: 400,
+    headers: { "Content-Type": "application/json", ...corsHeaders },
+  });
+
 const handler = async (req: Request): Promise<Response> => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -27,37 +56,46 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const {
-      firstName,
-      lastName = "",
-      email,
-      phone,
-      message = "",
-      style,
+      firstName: rawFirstName,
+      lastName: rawLastName = "",
+      email: rawEmail,
+      phone: rawPhone,
+      message: rawMessage = "",
+      style: rawStyle,
       source,
     }: ContactEmailRequest = await req.json();
 
     // Validate required fields. Style Book inquiries don't require lastName or message.
     const isStyleBook = source === "style-book";
-    if (!firstName || !email || (!isStyleBook && (!lastName || !message))) {
-      return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
+    if (!rawFirstName || !rawEmail || (!isStyleBook && (!rawLastName || !rawMessage))) {
+      return badRequest("Missing required fields");
     }
 
+    const email = typeof rawEmail === "string" ? rawEmail.trim() : "";
+    if (!isPlainEmail(email)) {
+      return badRequest("email must be a single plain email address");
+    }
+    const phone = typeof rawPhone === "string" ? rawPhone.trim() : "";
+    if (rawPhone != null && rawPhone !== "" && !isPlainPhone(phone)) {
+      return badRequest("phone must contain only digits and standard separators");
+    }
+
+    const firstName = escapeHtml(rawFirstName);
+    const lastName = escapeHtml(rawLastName);
+    const message = escapeHtml(rawMessage);
+    const style = rawStyle ? escapeHtml(rawStyle) : undefined;
+
     const fullName = `${firstName}${lastName ? " " + lastName : ""}`.trim();
-    console.log("Sending contact form email for:", fullName, email, "source:", source);
+    const subjectName = `${rawFirstName}${rawLastName ? " " + rawLastName : ""}`.trim();
+    console.log("Sending contact form email for:", subjectName, email, "source:", source);
 
     // Send notification email to the team
     const teamEmailResponse = await resend.emails.send({
       from: "Beau Monde Builders <onboarding@resend.dev>",
       to: ["ajhoover@mac.com"],
       subject: isStyleBook
-        ? `Style Book Inquiry — ${style ?? "Unspecified"} — ${fullName}`
-        : `New Contact Form Submission from ${fullName}`,
+        ? `Style Book Inquiry — ${rawStyle ?? "Unspecified"} — ${subjectName}`
+        : `New Contact Form Submission from ${subjectName}`,
       html: `
         <div style="font-family: Georgia, serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
           <h1 style="color: #B8860B; font-weight: 300; font-size: 28px; margin-bottom: 30px;">${isStyleBook ? "Style Book Inquiry" : "New Contact Form Submission"}</h1>
